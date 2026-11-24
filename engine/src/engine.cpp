@@ -7,9 +7,17 @@ namespace Engine {
     int print(lua_State* lua) {
         const char* message = luaL_checkstring(lua, 1);
 
-        std::cout << EngineName << message << '\n';
+        std::cout << "[" << EngineName << "]: " << message << '\n';
 
         return 0;
+    }
+    int Add(lua_State* lua){
+        lua_Integer a = luaL_checkinteger(lua, 1);
+        lua_Integer b = luaL_checkinteger(lua, 1);
+
+        lua_pushinteger(lua, a + b);
+        
+        return 1;
     }
 
     int get_version(lua_State* lua) {
