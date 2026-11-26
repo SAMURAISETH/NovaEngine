@@ -5,6 +5,15 @@
 #include <string>
 
 int main() {
+    
+
+    std::string EngineName = "Nova Engine";
+    
+    if (!Window::create()) {
+        std::cerr << "Failed to create window!\n";
+        return 1;
+    }
+    
     lua_State* lua = luaL_newstate();
     Engine::register_functions(lua);
     luaL_openlibs(lua);
@@ -19,15 +28,6 @@ int main() {
     }
 
     lua_close(lua);
-
-    std::string EngineName = "Nova Engine";
-    
-    if (!Window::create()) {
-        std::cerr << "Failed to create window!\n";
-        return 1;
-    }
-    
-
     
     while (Window::is_open()) {
         Window::update();

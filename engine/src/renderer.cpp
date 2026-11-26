@@ -4,11 +4,22 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <vector>
 
 namespace Renderer {
     unsigned int shaderProgram = 0;
     unsigned int VAO = 0;
     unsigned int VBO = 0;
+    float screenWidth = 800.0f;
+    float screenHeight = 600.0f;
+
+    struct Rectangle {
+        float x;
+        float y;
+        float width;
+        float height;
+    };
+    std::vector<Rectangle> rectangles;
 
     unsigned int compile_shader(unsigned int type, const std::string& source) {
         unsigned int shader = glCreateShader(type);
@@ -49,7 +60,7 @@ namespace Renderer {
     std::string EngineName = "Nova Engine";
     bool initialize() {
         const GLubyte* version = glGetString(GL_VERSION);
-        
+        glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
 
         if (!version) {
             std::cerr << "Failed to get OpenGL version\n";
@@ -94,24 +105,14 @@ namespace Renderer {
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    float vertices[] = {
-        // First triangle
-        -0.5f, -0.5f,
-         0.5f, -0.5f,
-         0.5f,  0.5f,
     
-        // Second triangle
-        -0.5f, -0.5f,
-         0.5f,  0.5f,
-        -0.5f,  0.5f
-    };
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
 
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
 
     glVertexAttribPointer(
         0,
@@ -130,16 +131,45 @@ namespace Renderer {
         return true;
     }
 
+    void draw_rectangle(float x, float y, float width, float height) {
+        rectangles.push_back({x, y, width, height});
+    }
+
     void render() {
         glClearColor(0.1f, 0.2f, 0.4f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-    
-        glUseProgram(shaderProgram);
-    
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-    
-        glBindVertexArray(0);
+        for (const Rectangle& rectangle : rectangles) {
+            float left = (2.0f * rectangle.x / screenWidth) - 1.0f;
+            float right = (2.0f * (rectangle.x + rectangle.width) / screenWidth) - 1.0f;
+
+            float top = 1.0f - (2.0f * rectangle.y / screenHeight);
+            float bottom = 1.0f - (2.0f * (rectangle.y + rectangle.height) / screenHeight);
+
+            float vertices[] = {
+                left, bottom,
+                right, bottom,
+                right, top,
+            
+                left, bottom,
+                right, top,
+                left, top
+            };
+            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+            glBufferSubData(
+                GL_ARRAY_BUFFER,
+                0,
+                sizeof(vertices),
+                vertices
+            );
+            glUseProgram(shaderProgram);
+
+            glBindVertexArray(VAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+
+            glBindVertexArray(0);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+        }
     }
 
     void shutdown() {
